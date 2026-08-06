@@ -1,27 +1,39 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const { connectDB } = require('./config/db');
+const { initDB } = require('./config/db');
+const { authenticateJWT } = require('./middleware/auth');
+const UserStore = require('./models/UserStore');
 
 dotenv.config();
 
 const app = express();
 
-// Middleware
+// Secure CORS policy (allows CLIENT_URL from env or localhost for dev)
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'http://localhost:5173',
+  'http://localhost:3000'
+].filter(Boolean);
+
 app.use(cors({
-  origin: '*',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*') || process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    return callback(new Error('CORS policy error: Origin not allowed.'));
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key'],
+  credentials: true
 }));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-const { authenticateJWT } = require('./middleware/auth');
-const UserStore = require('./models/UserStore');
-
-// Database Connection & Admin Init
-connectDB().then(() => {
-  UserStore.ensureDefaultAdmin();
+// Initialize PostgreSQL database & verify default admin user
+initDB().then(async () => {
+  await UserStore.ensureDefaultAdmin();
 });
 
 // Routes
@@ -53,7 +65,7 @@ app.get('/api/analytics', authenticateJWT, async (req, res) => {
       success: true,
       data: {
         totalAds: ads.length,
-        activeAds: ads.filter(a => a.isActive).length,
+        activeAds: ads.filter(a => a.isActive || a.status === 'active').length,
         totalImpressions,
         totalClicks,
         ctr: `${ctr}%`,
@@ -68,9 +80,10 @@ app.get('/api/analytics', authenticateJWT, async (req, res) => {
 // Root API Health Check
 app.get('/', (req, res) => {
   res.json({
-    name: 'Prince Ads - Standalone Ad Engine REST API',
+    name: 'Prince Ads - Enterprise PostgreSQL Ad Engine REST API',
     status: 'ONLINE',
     version: '1.0.0',
+    database: 'PostgreSQL',
     documentation: '/api/ads',
     endpoints: [
       'GET /api/ads',
@@ -80,6 +93,7 @@ app.get('/', (req, res) => {
       'POST /api/ads',
       'PUT /api/ads/:id',
       'DELETE /api/ads/:id',
+      'POST /api/ads/upload',
       'POST /api/auth/login',
       'GET /api/keys'
     ]
