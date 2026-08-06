@@ -12,22 +12,29 @@ dotenv.config();
 const app = express();
 
 const isProduction = process.env.NODE_ENV === 'production';
-const prodClientUrl = process.env.CLIENT_URL;
 
-// CORS configuration: Allow production domain / same-origin in production, remove localhost in production
+// CORS configuration
+// In a unified app (Express serves React), all browser requests are same-origin.
+// We allow all same-origin requests and optionally allow CLIENT_URL if set.
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow same-origin requests (e.g. browser fetching from same origin)
+    // Same-origin requests have no Origin header — always allow
     if (!origin) return callback(null, true);
 
+    // In production, allow same-origin (the Render domain) and CLIENT_URL if set
     if (isProduction) {
-      if (prodClientUrl && (origin === prodClientUrl || origin.replace(/\/$/, '') === prodClientUrl.replace(/\/$/, ''))) {
+      const clientUrl = process.env.CLIENT_URL;
+      // Allow if CLIENT_URL matches, or if CLIENT_URL is not set (unified app = same-origin is fine)
+      if (!clientUrl) return callback(null, true);
+      const normalizedOrigin = origin.replace(/\/$/, '');
+      const normalizedClient = clientUrl.replace(/\/$/, '');
+      if (normalizedOrigin === normalizedClient) {
         return callback(null, true);
       }
-      return callback(new Error('CORS Policy: Origin not allowed in production.'));
+      return callback(new Error('CORS Policy: Origin not allowed.'));
     }
 
-    // Development mode allowed origins
+    // Development: allow everything
     return callback(null, true);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -38,9 +45,17 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Resolve client/dist path relative to server directory
+const clientDistPath = path.resolve(__dirname, '..', 'client', 'dist');
+
 // Serve static React production build assets from client/dist
-const clientDistPath = path.join(__dirname, '../client/dist');
-app.use(express.static(clientDistPath));
+// This must come BEFORE the wildcard SPA fallback route
+if (fs.existsSync(clientDistPath)) {
+  console.log(`📂 Serving static files from: ${clientDistPath}`);
+  app.use(express.static(clientDistPath));
+} else {
+  console.warn(`⚠️  WARNING: client/dist not found at ${clientDistPath}. Run 'npm run build' first.`);
+}
 
 // Auto-initialize local JSON database stores & default admin user
 UserStore.ensureDefaultAdmin();
@@ -85,22 +100,28 @@ app.get('/api/analytics', authenticateJWT, async (req, res) => {
   }
 });
 
-// Non-API Route Handler: Return client/dist/index.html for SPA routes (/ , /login, /dashboard)
+// SPA Fallback: For any non-API GET request, serve index.html
+// This lets React Router handle /login, /dashboard, etc.
 app.get('*', (req, res) => {
-  if (!req.path.startsWith('/api')) {
-    const indexHtml = path.join(clientDistPath, 'index.html');
-    if (fs.existsSync(indexHtml)) {
-      return res.sendFile(indexHtml);
-    }
+  // Never intercept /api/* routes — let them 404 naturally
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ success: false, error: 'API endpoint not found.' });
   }
-  res.status(404).json({ success: false, error: 'Resource or API endpoint not found.' });
+
+  const indexHtml = path.join(clientDistPath, 'index.html');
+  if (fs.existsSync(indexHtml)) {
+    return res.sendFile(indexHtml);
+  }
+
+  res.status(500).json({ success: false, error: 'Client build not found. Run npm run build.' });
 });
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Prince Ads Unified Express App running on port ${PORT}`);
+  console.log(`🚀 Prince Ads Unified App running on port ${PORT}`);
   console.log(`📡 Base URL: http://localhost:${PORT}`);
   console.log(`🔑 API Endpoints: http://localhost:${PORT}/api/ads`);
-  console.log(`💻 Serving React Dashboard from: ${clientDistPath}`);
+  console.log(`💻 Client dist path: ${clientDistPath}`);
+  console.log(`📦 Client dist exists: ${fs.existsSync(clientDistPath)}`);
 });
