@@ -7,22 +7,33 @@ const { getJwtSecret } = require('../middleware/auth');
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password } = req.body || {};
 
     if (!username || !password) {
       return res.status(400).json({ success: false, error: 'Username and password are required.' });
     }
 
-    // Ensure default admin exists
-    await UserStore.ensureDefaultAdmin();
+    // Ensure default admin exists (safe to call multiple times)
+    try {
+      await UserStore.ensureDefaultAdmin();
+    } catch (initErr) {
+      console.error('[Login] Admin init error:', initErr.message);
+      // Continue anyway — admin may already exist from server startup
+    }
 
     const user = await UserStore.findByUsername(username);
     if (!user) {
       return res.status(401).json({ success: false, error: 'Invalid username or password.' });
     }
 
-    // Verify bcrypt password hash
-    const isValid = UserStore.verifyPassword(password, user.password);
+    // Verify bcrypt password hash — use password_hash field, fall back to password field
+    const storedHash = user.password_hash || user.password;
+    if (!storedHash) {
+      console.error('[Login] No password hash found for user:', user.username);
+      return res.status(500).json({ success: false, error: 'Account configuration error. Please contact administrator.' });
+    }
+
+    const isValid = UserStore.verifyPassword(password, storedHash);
     if (!isValid) {
       return res.status(401).json({ success: false, error: 'Invalid username or password.' });
     }
@@ -50,7 +61,8 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
+    console.error('[Login Error]', err.message, err.stack);
+    return res.status(500).json({ success: false, error: 'Internal server error during authentication.' });
   }
 });
 

@@ -1,9 +1,9 @@
 {
   "id": "admin-1",
   "username": "prince",
-  "password_hash": "$2a$10$ozKWZQING1DB.As24m0gIePpXLyIjRE9/1t.ARJ7tqwcLSutN/45O",
-  "password": "$2a$10$ozKWZQING1DB.As24m0gIePpXLyIjRE9/1t.ARJ7tqwcLSutN/45O",
+  "password_hash": "$2a$10$VSIaj9jZO9lbVwdq5l7ahuOQx65EDwUTY5qITGI2a9lKFWhAUXa/O",
+  "password": "$2a$10$VSIaj9jZO9lbVwdq5l7ahuOQx65EDwUTY5qITGI2a9lKFWhAUXa/O",
   "name": "Prince Ads Admin",
   "role": "admin",
-  "createdAt": "2026-08-06T14:25:08.148Z"
+  "createdAt": "2026-08-06T15:06:10.173Z"
 }
