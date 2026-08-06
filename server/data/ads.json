@@ -1,0 +1,80 @@
+[
+  {
+    "id": "ad-101",
+    "_id": "ad-101",
+    "title": "PRINCE STUDIOS VIP Platinum Membership",
+    "description": "Exclusive VIP Membership Pass for Prince Studios",
+    "advertiser": "PRINCE STUDIOS",
+    "adType": "image",
+    "mediaUrl": "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1200&auto=format&fit=crop",
+    "image_url": "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1200&auto=format&fit=crop",
+    "video_url": "",
+    "targetUrl": "https://prince-studios.com/vip",
+    "redirect_url": "https://prince-studios.com/vip",
+    "ctaText": "Get VIP Pass",
+    "placement": [
+      "preshow",
+      "intermission",
+      "banner",
+      "popup"
+    ],
+    "priority": 10,
+    "status": "active",
+    "isActive": true,
+    "impressions": 482,
+    "clicks": 124,
+    "createdAt": "2026-08-06T19:53:30.000Z",
+    "updatedAt": "2026-08-06T19:53:30.000Z"
+  },
+  {
+    "id": "ad-102",
+    "_id": "ad-102",
+    "title": "Dolby Atmos 3D Spatial Audio Showcase",
+    "description": "Experience true 3D spatial audio powered by Dolby Atmos",
+    "advertiser": "Dolby Labs",
+    "adType": "video",
+    "mediaUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    "image_url": "",
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    "targetUrl": "https://dolby.com",
+    "redirect_url": "https://dolby.com",
+    "ctaText": "Discover Sound",
+    "placement": [
+      "preshow",
+      "intermission"
+    ],
+    "priority": 8,
+    "status": "active",
+    "isActive": true,
+    "impressions": 310,
+    "clicks": 68,
+    "createdAt": "2026-08-06T19:53:30.000Z",
+    "updatedAt": "2026-08-06T19:53:30.000Z"
+  },
+  {
+    "id": "ad-103",
+    "_id": "ad-103",
+    "title": "Neo-Tokyo VR Cinema Headset 8K",
+    "description": "Next gen 8K VR cinema headset",
+    "advertiser": "CyberTech Labs",
+    "adType": "image",
+    "mediaUrl": "https://images.unsplash.com/photo-1535223289827-42f1e9919769?q=80&w=1200&auto=format&fit=crop",
+    "image_url": "https://images.unsplash.com/photo-1535223289827-42f1e9919769?q=80&w=1200&auto=format&fit=crop",
+    "video_url": "",
+    "targetUrl": "https://cybertech.example.com",
+    "redirect_url": "https://cybertech.example.com",
+    "ctaText": "25% Off Gear",
+    "placement": [
+      "banner",
+      "popup",
+      "sidebar"
+    ],
+    "priority": 9,
+    "status": "active",
+    "isActive": true,
+    "impressions": 215,
+    "clicks": 43,
+    "createdAt": "2026-08-06T19:53:30.000Z",
+    "updatedAt": "2026-08-06T19:53:30.000Z"
+  }
+]

@@ -1,15 +1,15 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const { initDB } = require('./config/db');
 const { authenticateJWT } = require('./middleware/auth');
 const UserStore = require('./models/UserStore');
+const AdStore = require('./models/AdStore');
 
 dotenv.config();
 
 const app = express();
 
-// Secure CORS policy (allows CLIENT_URL from env or localhost for dev)
+// Secure CORS policy
 const allowedOrigins = [
   process.env.CLIENT_URL,
   'http://localhost:5173',
@@ -31,10 +31,8 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Initialize PostgreSQL database & verify default admin user
-initDB().then(async () => {
-  await UserStore.ensureDefaultAdmin();
-});
+// Auto-initialize local JSON database stores & default admin user
+UserStore.ensureDefaultAdmin();
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
@@ -44,7 +42,6 @@ app.use('/api/keys', require('./routes/apiKeyRoutes'));
 // GET /api/analytics - Global performance metrics (Admin Auth Required)
 app.get('/api/analytics', authenticateJWT, async (req, res) => {
   try {
-    const AdStore = require('./models/AdStore');
     const ads = await AdStore.getAll();
     
     let totalImpressions = 0;
@@ -80,10 +77,10 @@ app.get('/api/analytics', authenticateJWT, async (req, res) => {
 // Root API Health Check
 app.get('/', (req, res) => {
   res.json({
-    name: 'Prince Ads - Enterprise PostgreSQL Ad Engine REST API',
+    name: 'Prince Ads - Zero-Database JSON Engine REST API',
     status: 'ONLINE',
     version: '1.0.0',
-    database: 'PostgreSQL',
+    storage: 'JSON Files (ads.json, admin.json)',
     documentation: '/api/ads',
     endpoints: [
       'GET /api/ads',

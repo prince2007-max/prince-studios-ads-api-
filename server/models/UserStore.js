@@ -1,110 +1,115 @@
+const fs = require('fs');
+const path = require('path');
 const bcrypt = require('bcryptjs');
-const { query, getIsPgConnected } = require('../config/db');
 
-// In-Memory Fallback Storage
-let memoryAdmins = [];
+const DATA_DIR = path.join(__dirname, '..', 'data');
+const ADMIN_FILE = path.join(DATA_DIR, 'admin.json');
+
+// Helper to ensure data directory exists
+function ensureDataDir() {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+}
+
+// Read admin account from JSON file
+function readAdminFile() {
+  ensureDataDir();
+  if (!fs.existsSync(ADMIN_FILE)) {
+    return null;
+  }
+  try {
+    const raw = fs.readFileSync(ADMIN_FILE, 'utf8');
+    return JSON.parse(raw);
+  } catch (err) {
+    console.error('Error reading admin.json:', err.message);
+    return null;
+  }
+}
+
+// Write admin account to JSON file
+function writeAdminFile(adminData) {
+  ensureDataDir();
+  try {
+    fs.writeFileSync(ADMIN_FILE, JSON.stringify(adminData, null, 2), 'utf8');
+    return true;
+  } catch (err) {
+    console.error('Error writing admin.json:', err.message);
+    return false;
+  }
+}
 
 class UserStore {
-  // Ensure initial setup admin (PRINCE / VSICS2024) exists in database with bcrypt hash
+  // Ensure default admin (PRINCE / VSICS2024) is saved in admin.json with bcrypt hash
   static async ensureDefaultAdmin() {
     const adminUsername = (process.env.ADMIN_USERNAME || 'PRINCE').trim();
     const adminPassword = process.env.ADMIN_PASSWORD || 'VSICS2024';
 
-    const existing = await this.findByUsername(adminUsername);
-    if (!existing) {
+    let currentAdmin = readAdminFile();
+
+    if (!currentAdmin || currentAdmin.username.toLowerCase() !== adminUsername.toLowerCase()) {
       const salt = bcrypt.genSaltSync(10);
       const hashedPassword = bcrypt.hashSync(adminPassword, salt);
 
-      await this.create({
-        username: adminUsername,
+      currentAdmin = {
+        id: 'admin-1',
+        username: adminUsername.toLowerCase(),
+        password_hash: hashedPassword,
         password: hashedPassword,
-        role: 'admin'
-      });
+        name: 'Prince Ads Admin',
+        role: 'admin',
+        createdAt: new Date().toISOString()
+      };
 
-      console.log(`🔐 Initial PostgreSQL Admin User verified/created: ${adminUsername} (Password hashed with bcrypt)`);
+      writeAdminFile(currentAdmin);
+      console.log(`🔐 Admin user saved to admin.json: ${adminUsername} (Bcrypt hashed)`);
     } else {
-      const currentPasswordHash = existing.password_hash || existing.password;
-      const isPasswordValid = bcrypt.compareSync(adminPassword, currentPasswordHash);
-      if (!isPasswordValid) {
+      const currentHash = currentAdmin.password_hash || currentAdmin.password;
+      const isValid = bcrypt.compareSync(adminPassword, currentHash);
+
+      if (!isValid) {
         const salt = bcrypt.genSaltSync(10);
-        const newHashedPassword = bcrypt.hashSync(adminPassword, salt);
-        await this.updatePassword(existing.id || existing._id, newHashedPassword);
-        console.log(`🔐 PostgreSQL Admin password updated to match environment config.`);
+        const newHash = bcrypt.hashSync(adminPassword, salt);
+        currentAdmin.password_hash = newHash;
+        currentAdmin.password = newHash;
+        writeAdminFile(currentAdmin);
+        console.log(`🔐 Admin password in admin.json updated to match environment configuration.`);
       }
     }
+    return currentAdmin;
   }
 
-  // Parameterized SQL search for user by username
   static async findByUsername(username) {
     if (!username) return null;
     const cleanUsername = username.trim().toLowerCase();
+    const admin = readAdminFile();
 
-    if (getIsPgConnected()) {
-      const res = await query('SELECT * FROM admins WHERE LOWER(username) = LOWER($1) LIMIT 1;', [cleanUsername]);
-      return res && res.rows.length > 0 ? res.rows[0] : null;
+    if (admin && admin.username.toLowerCase() === cleanUsername) {
+      return admin;
     }
-
-    return memoryAdmins.find(u => u.username.toLowerCase() === cleanUsername) || null;
+    return null;
   }
 
-  // Parameterized SQL search by ID
   static async findById(id) {
     if (!id) return null;
-
-    if (getIsPgConnected()) {
-      const res = await query('SELECT * FROM admins WHERE id = $1 LIMIT 1;', [id]);
-      return res && res.rows.length > 0 ? res.rows[0] : null;
+    const admin = readAdminFile();
+    if (admin && (admin.id === id || admin._id === id)) {
+      return admin;
     }
-
-    return memoryAdmins.find(u => u.id === id || u._id === id) || null;
+    return null;
   }
 
-  // Parameterized SQL INSERT into admins table
-  static async create(userData) {
-    const cleanUsername = userData.username.trim().toLowerCase();
-    const passwordHash = userData.password_hash || userData.password;
-    const role = userData.role || 'admin';
-
-    if (getIsPgConnected()) {
-      const res = await query(
-        'INSERT INTO admins (username, password_hash, role) VALUES ($1, $2, $3) RETURNING *;',
-        [cleanUsername, passwordHash, role]
-      );
-      return res.rows[0];
-    }
-
-    const newAdmin = {
-      id: `admin-${Date.now()}`,
-      username: cleanUsername,
-      password_hash: passwordHash,
-      password: passwordHash,
-      role,
-      created_at: new Date()
-    };
-
-    memoryAdmins.push(newAdmin);
-    return newAdmin;
-  }
-
-  // Parameterized SQL UPDATE for password_hash
   static async updatePassword(id, hashedPassword) {
-    if (getIsPgConnected()) {
-      const res = await query(
-        'UPDATE admins SET password_hash = $1 WHERE id = $2 RETURNING *;',
-        [hashedPassword, id]
-      );
-      return res && res.rows.length > 0 ? res.rows[0] : null;
-    }
-
-    const admin = memoryAdmins.find(u => u.id === id || u._id === id);
-    if (admin) {
+    const admin = readAdminFile();
+    if (admin && (admin.id === id || admin._id === id)) {
       admin.password_hash = hashedPassword;
       admin.password = hashedPassword;
+      writeAdminFile(admin);
+      return admin;
     }
-    return admin;
+    return null;
   }
 
-  // Verify bcrypt password
   static verifyPassword(plainPassword, hashedPassword) {
     if (!plainPassword || !hashedPassword) return false;
     return bcrypt.compareSync(plainPassword, hashedPassword);

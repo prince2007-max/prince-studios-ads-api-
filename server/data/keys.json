@@ -1,0 +1,22 @@
+[
+  {
+    "id": "key-1",
+    "_id": "key-1",
+    "name": "Prince Studios Cinema Integration",
+    "key": "pa_live_prince_cinema_98f24a12",
+    "domain": "localhost",
+    "isActive": true,
+    "requests": 1420,
+    "createdAt": "2026-08-06T19:53:30.000Z"
+  },
+  {
+    "id": "key-2",
+    "_id": "key-2",
+    "name": "Mobile App Ad Feed",
+    "key": "pa_live_mobile_app_77b319e0",
+    "domain": "*",
+    "isActive": true,
+    "requests": 680,
+    "createdAt": "2026-08-06T19:53:30.000Z"
+  }
+]
