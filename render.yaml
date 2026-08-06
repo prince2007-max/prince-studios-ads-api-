@@ -1,9 +1,10 @@
 services:
   - type: web
-    name: prince-ads-api
+    name: prince-ads
     env: node
-    buildCommand: cd server && npm install
-    startCommand: cd server && npm start
+    rootDir: .
+    buildCommand: npm run install-all && npm run build
+    startCommand: npm start
     envVars:
       - key: PORT
         value: 5000
@@ -15,3 +16,5 @@ services:
         value: PRINCE
       - key: ADMIN_PASSWORD
         value: VSICS2024
+      - key: CLIENT_URL
+        sync: false

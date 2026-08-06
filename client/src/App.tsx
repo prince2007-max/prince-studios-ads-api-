@@ -24,14 +24,23 @@ export function App() {
       .then((userData) => {
         if (userData && userData.role === 'admin') {
           setUser(userData);
+          if (window.location.pathname === '/' || window.location.pathname === '/login') {
+            window.history.replaceState({}, '', '/dashboard');
+          }
         } else {
           setUser(null);
           localStorage.removeItem('prince_ads_jwt_token');
+          if (window.location.pathname === '/dashboard') {
+            window.history.replaceState({}, '', '/login');
+          }
         }
       })
       .catch(() => {
         setUser(null);
         localStorage.removeItem('prince_ads_jwt_token');
+        if (window.location.pathname === '/dashboard') {
+          window.history.replaceState({}, '', '/login');
+        }
       })
       .finally(() => {
         setIsCheckingAuth(false);
@@ -41,6 +50,7 @@ export function App() {
   const handleLogout = () => {
     localStorage.removeItem('prince_ads_jwt_token');
     setUser(null);
+    window.history.replaceState({}, '', '/login');
   };
 
   const handleOpenCreateModal = () => {
@@ -84,6 +94,7 @@ export function App() {
       <Login
         onLoginSuccess={(_token, userData) => {
           setUser(userData);
+          window.history.replaceState({}, '', '/dashboard');
         }}
       />
     );
