@@ -30,9 +30,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onOpenCreateModal, onNavig
       setAnalytics(fetchedAnalytics);
     } catch (err) {
       console.error('Error loading dashboard data:', err);
-    } finally {
-      setLoading(false);
-    }
+    } 
   };
 
   useEffect(() => {
