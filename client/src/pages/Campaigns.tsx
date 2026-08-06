@@ -11,17 +11,17 @@ interface CampaignsProps {
 export const Campaigns: React.FC<CampaignsProps> = ({ onOpenCreateModal, onEditAd }) => {
   const [ads, setAds] = useState<Ad[]>([]);
   const [filterType, setFilterType] = useState<string>('all');
+  const [loading, setLoading] = useState(false);
 
-  const loadAds = async () => {
-    try {
-      const data = await api.getAds();
-      setAds(data);
-    } catch (e) {
-      console.error('Error fetching ads:', e);
-    } finally {
-      setLoading(false);
-    }
-  };
+ const loadAds = async () => {
+
+  try {
+    const data = await api.getAds();
+    setAds(data);
+  } catch (e) {
+    console.error('Error fetching ads:', e);
+  } 
+};
 
   useEffect(() => {
     loadAds();

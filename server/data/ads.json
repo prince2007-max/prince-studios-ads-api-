@@ -1,5 +1,34 @@
 [
   {
+    "id": "ad-1786031324226-vzbd",
+    "_id": "ad-1786031324226-vzbd",
+    "title": "gemini",
+    "description": "Prince Sponsor",
+    "advertiser": "Prince Sponsor",
+    "adType": "image",
+    "mediaUrl": "https://www.instagram.com/p/DXKISQNjrn4/",
+    "htmlContent": "",
+    "image_url": "https://www.instagram.com/p/DXKISQNjrn4/",
+    "video_url": "",
+    "targetUrl": "https://prince-studios.com",
+    "redirect_url": "https://prince-studios.com",
+    "ctaText": "Learn More",
+    "placement": [
+      "banner",
+      "preshow",
+      "intermission",
+      "popup",
+      "sidebar"
+    ],
+    "priority": 5,
+    "status": "active",
+    "isActive": true,
+    "impressions": 0,
+    "clicks": 0,
+    "createdAt": "2026-08-06T15:48:44.226Z",
+    "updatedAt": "2026-08-06T15:48:44.227Z"
+  },
+  {
     "id": "ad-101",
     "_id": "ad-101",
     "title": "PRINCE STUDIOS VIP Platinum Membership",
